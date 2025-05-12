@@ -1,0 +1,211 @@
+---
+title: "Taxa de Alfabetização nos Continentes"
+format:
+  html:
+    self-contained: true
+    css: estilo.css
+editor: visual
+---
+
+```{r}
+#| warning: false 
+#| echo: false
+
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+# Carregar os pacotes necessários sem exibir mensagens
+suppressMessages(library(dplyr))   # Manipulação de dados
+suppressMessages(library(tidyr))   # Limpeza de dados
+suppressMessages(library(WDI))     # Obter dados do World Bank
+suppressMessages(library(ggplot2)) # Criar gráficos
+suppressMessages(library(purrr))   # Funções de programação funcional
+suppressMessages(library(RColorBrewer)) # Paletas de cores para gráficos
+```
+
+## Introdução
+
+A taxa de alfabetização é um indicador crucial para entender o nível de educação de uma população e o acesso a oportunidades. Os gráficos a seguir apresentarão a evolução da taxa de alfabetização por continente entre os anos de 2000 e 2023, com um foco especial nas diferenças regionais. A análise busca entender as variações entre os continentes da Europa, América, África e Ásia, explorando os fatores históricos, econômicos e sociais que influenciam esses índices. A partir desses dados, podemos refletir sobre o impacto da alfabetização no desenvolvimento de uma sociedade, tanto no nível individual quanto coletivo.
+
+## O que é alfabetização?
+
+A alfabetização é um processo de aprendizado que capacita o indivíduo a ler, escrever de acordo com as regras e convenções de um idioma, interpretar textos, analisar informações e criar conteúdo. Para que um indivíduo seja considerada alfabetizado, não basta apenas entender palavras isoladas, ele deve ser capaz de se comunicar de forma funcional na sociedade, utilizando a leitura e a escrita para participar ativamente da vida social e tomar decisões informadas.
+
+```{=html}
+<style>
+.imagem-central {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  border: 4px solid #2f5958;
+  border-radius: 0;
+  max-width: 80%;
+}
+</style>
+```
+
+<img src="alfabetizacao.png" class="imagem-central"/>
+
+## Qual a sua importância?
+
+um alto índice de alfabetização não apenas melhora a vida individual de cada cidadão, mas também traz benefícios econômicos, sociais, culturais e democráticos para toda a sociedade.
+
+#### Benefícios para o indivíduo
+
+-   Acesso a educação
+
+-   Inserção no mercado de trabalho
+
+-   Autonomia
+
+-   Cidadania ativa
+
+#### Benefícios para a sociedade
+
+-   Qualidade da educação
+
+-   Maior produtividade
+
+-   Redução de desigualdades
+
+-   Fortalecimento da cidadania
+
+-   Saúde pública
+
+```{r}
+#| warning: false 
+#| echo: false
+
+# Lista manual dos países da Oceania
+paises_oceania <- c("AU", "PG", "NZ", "FJ", "SB", "FM", "WS", "VU", "TO", "KI", "MH", "NR", "TV", "AS")
+
+# Definir o indicador de alfabetização
+indicador <- "SE.ADT.LITR.ZS"  # Taxa de alfabetização de adultos, em percentual
+
+# Buscar todos os países com dados de alfabetização e informação de continente
+dados_completos <- WDI(
+  country = "all",
+  indicator = indicador,
+  start = 2000,
+  end = 2023,
+  extra = TRUE
+) %>%
+  filter(region != "Aggregates") %>%
+  drop_na(SE.ADT.LITR.ZS)
+
+# Filtrar e renomear os continentes, incluindo a Oceania manualmente
+dados_continentes <- dados_completos %>%
+  mutate(continente = case_when(
+    region %in% c("Sub-Saharan Africa", "Middle East & North Africa") ~ "África",
+    region %in% c("Latin America & Caribbean", "North America") ~ "América",
+    region %in% c("East Asia & Pacific", "South Asia") ~ "Ásia",
+    region %in% c("Europe & Central Asia") ~ "Europa",
+    country %in% paises_oceania ~ "Oceania",  # Incluindo os países da Oceania manualmente
+    TRUE ~ NA_character_
+  )) %>%
+  filter(!is.na(continente))
+
+# Calcular média da taxa de alfabetização por continente e ano
+medias_continente_ano <- dados_continentes %>%
+  group_by(year, continente) %>%
+  summarise(media = mean(SE.ADT.LITR.ZS, na.rm = TRUE), .groups = "drop")
+```
+
+## Evolução da taxa de alfabetização dos continentes (2000-2023)
+
+```{r}
+#| warning: false 
+#| echo: false
+
+library(ggplot2)
+
+ggplot(medias_continente_ano, aes(x = year, y = media, color = continente)) +
+  geom_line(size = 1.2, lineend = "round") +  # Conecta os pontos com linhas reais
+  geom_point(size = 2) +                      # Pontos reais nos dados
+  labs(
+    title = "Taxa de Alfabetização por Continente (2000–2023)",
+    x = "Ano",
+    y = "Taxa média (%)",
+    color = NULL
+  ) +
+  scale_color_brewer(palette = "Set2") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 12, face = "bold"),
+    axis.title.y = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10)
+  )
+```
+
+O gráfico mostra que Europa e América mantêm consistentemente as maiores taxas médias de alfabetização ao longo dos anos analisados, enquanto África e Ásia apresentam médias mais baixas, apesar de também mostrarem evolução. Essa diferença se explica por diversos fatores, como o maior desenvolvimento econômico e os investimentos mais antigos e estruturados em educação básica universal na Europa e nas Américas. Por outro lado, muitos países africanos e asiáticos ainda enfrentam desafios como instabilidade política, conflitos, desigualdades históricas e barreiras culturais que dificultam o acesso pleno à educação.
+
+## Alfabetização dos continentes em 2020
+
+```{r}
+#| warning: false 
+#| echo: false
+
+# Filtrar dados apenas para o ano de 2020
+dados_2020 <- medias_continente_ano %>% filter(year == 2020)
+
+# Gráfico da Taxa de Alfabetização por Continente em 2020
+ggplot(dados_2020, aes(x = continente, y = media, fill = continente)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Taxa de Alfabetização por Continente (2020)",
+    x = "Continente",
+    y = "Taxa média (%)"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 12, face = "bold"),
+    axis.title.y = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    legend.position = "none"
+  )
+```
+
+Em 2020, a Europa se destaca com a maior taxa média de alfabetização, resultado de investimentos contínuos em educação pública, políticas de inclusão e estabilidade econômica. Em seguida, aparece a America, Ásia e a África apresentando as menores taxas e que é prejudicada por fatores como pobreza, conflitos armados, infraestrutura precária e dificuldade de acesso à escola, especialmente em áreas rurais.
+
+## Evolução da taxa de alfabetização da Europa
+
+```{r}
+#| warning: false 
+#| echo: false
+
+# Filtrar dados apenas para o continente Europa
+dados_europa <- medias_continente_ano %>% filter(continente == "Europa")
+
+# Selecionar a primeira cor da paleta Set2
+cor_europa <- brewer.pal(n = 6, name = "Set2")[1]
+
+# Gráfico da Evolução da Taxa de Alfabetização da Europa (2000–2023)
+ggplot(dados_europa, aes(x = year, y = media)) +
+  geom_line(size = 1.2, color = cor_europa) +
+  geom_point(size = 2, color = cor_europa) +
+  labs(
+    title = "Evolução da Taxa de Alfabetização da Europa (2000–2023)",
+    x = "Ano",
+    y = "Taxa média (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+    axis.title.x = element_text(size = 12, face = "bold"),
+    axis.title.y = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10)
+  )
+```
+
+Países europeus implementaram sistemas de educação pública universal e gratuita, com ênfase na igualdade de oportunidades para todos os cidadãos desde o pós-Segunda Guerra Mundial. Durante a Revolução Industrial, o crescimento econômico impulsionou investimentos em educação, criando um sistema mais acessível. Além disso, a riqueza histórica da Europa também desempenhou um papel crucial no aumento das taxas de alfabetização. A estabilidade política e os avanços econômicos pós-guerras ajudaram a consolidar esse desenvolvimento, permitindo maior acesso à educação, o que contribuiu para a alta taxa de alfabetização no continente.
+
+## Conclusão
+
+A análise das taxas de alfabetização ao longo dos anos revela grandes disparidades entre os continentes. A Europa, com seu desenvolvimento robusto, se destaca por conta de investimentos históricos em educação e uma economia estável. A américa passou por oscilações e já se encontra em percentuais mais próximos aos atuais da Europa. A África e a Ásia, por sua vez, enfrentam desafios profundos, como conflitos, instabilidade política e desigualdades sociais, que dificultam o avanço de suas taxas de alfabetização. Para alcançar um maior nível de alfabetização global, é fundamental continuar investindo em políticas educacionais, melhorar a infraestrutura e promover a igualdade de oportunidades para todos.
+
+**Feito por Lígia Isaura Sartori.**
