@@ -1,0 +1,66 @@
+---
+title: "Dívida Líquida dos Municípios de Santa Catarina"
+format: html
+editor: visual
+---
+
+## Código 15145
+
+O código 15145 traz dados sobre a dívida líquida dos municípios de Santa Catarina, ou seja, o que os municípios devemjá descontando seus ativos de curto prazo. Esses dados são importantes para medir a saúde fiscal, a capacidade de pagamento, o grau de individamento dos município e para monitorar o cumprimento da Lei de Responsalbilidade Fiscal (LRF).
+
+```{r}
+#| label: load-packages
+#| include: false
+
+# Carregamento dos pacotes
+library(GetBCBData)
+library(tidyverse)
+library(gganimate)
+
+options(repos = c(CRAN = "https://cran.r-project.org"))
+
+my.id <- c("Dívida Líquida dos Municípios de Santa Catarina" = 15145)
+
+df.bcb <- gbcbd_get_series(
+  id = my.id,
+  first.date = '2007-01-12',
+  last.date = Sys.Date(),
+  format.data = 'long',
+  use.memoise = TRUE,
+  cache.path = tempdir(),
+  do.parallel = FALSE
+)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| label: série temporal
+
+ggplot(df.bcb, aes(x = ref.date, y = value)) +
+  geom_point(color = "#2C77B8", size = 1.2) +
+  geom_point(color = "#F25C54", size = 2) +
+  labs(
+    title = 'Dívida Líquida dos Municípios de Santa Catarina',
+    subtitle = 'Evolução até {frame_time}',
+    x = 'Ano',
+    y = 'Valor em milhões (R$)'
+  ) +
+  theme_minimal(base_size = 14) +
+  transition_time(ref.date) +
+  ease_aes('linear')
+
+
+```
+
+O código 15145 traz dados sobre a dívida líquida dos municípios de Santa Catarina, ou seja, o que os municípios devemjá descontando seus ativos de curto prazo. Esses dados são importantes para medir a saúde fiscal, a capacidade de pagamento, o grau de individamento dos município e para monitorar o cumprimento da Lei de Responsalbilidade Fiscal (LRF).
+
+O código 15145 traz dados sobre a dívida líquida dos municípios de Santa Catarina, ou seja, o valor que os municípios devem, já descontando seus ativos de curto prazo. Esses dados são essenciais para avaliar a saúde fiscal, a capacidade de pagamento, o grau de endividamento e o cumprimento da Lei de Responsabilidade Fiscal (LRF).
+
+Ao analisar o gráfico, observa-se um crescimento da dívida líquida a partir de 2016. Esse aumento está relacionado à crise econômica daquele período, que reduziu a arrecadação de impostos, enquanto os gastos públicos continuaram crescendo. Para cobrir esse desequilíbrio, muitos municípios recorreram a novos empréstimos, o que elevou o endividamento.
+
+Em 2020, há um pico mais acentuado, reflexo dos impactos da pandemia da COVID-19. A desaceleração econômica agravou a queda na arrecadação, ao mesmo tempo em que aumentaram as despesas com saúde e assistência social. Diante desse cenário, muitos governos municipais recorreram novamente a empréstimos para manter os serviços essenciais.
+
+Nos anos mais recentes, com a estabilização econômica, o gráfico mostra uma tendência de queda, indicando uma possível melhora no equilíbrio fiscal dos municípios.
+
+\*\*Feito por Lígia Sartori.\*\*
